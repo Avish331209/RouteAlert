@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}RouteAlert – Salem Bus Delay and Route Diversion Alerts{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta name="description" content="Salem Bus Delay and Route Diversion Alert System - Real-time verified passenger notices for Salem, Tamil Nadu.">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('index') }}" class="brand" aria-label="RouteAlert Home">
+        <div class="brand-icon">
+          <!-- Bus SVG Icon -->
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"></path>
+            <path d="M16 6v6"></path>
+            <path d="M2 12h20"></path>
+            <path d="M19 19H5a2 2 0 0 1-2-2V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2Z"></path>
+            <circle cx="7" cy="16" r="1.5"></circle>
+            <circle cx="17" cy="16" r="1.5"></circle>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>RouteAlert</h1>
+          <span>Salem Bus Alert System</span>
+        </div>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li>
+            <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              Home
+            </a>
+          </li>
+
+          {% if is_admin_logged_in %}
+            <li>
+              <a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                  <path d="M3 9h18"></path>
+                  <path d="M9 21V9"></path>
+                </svg>
+                Admin Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="{{ url_for('add_alert') }}" class="btn-nav-accent {% if request.endpoint == 'add_alert' %}active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="16"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                Post Alert
+              </a>
+            </li>
+            <li>
+              <span class="user-badge" title="Authenticated Administrator">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                {{ admin_username }}
+              </span>
+            </li>
+            <li>
+              <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="btn btn-secondary btn-sm" style="color: #cbd5e1; border: 1px solid #475569; background: transparent;">
+                  Logout
+                </button>
+              </form>
+            </li>
+          {% else %}
+            <li>
+              <a href="{{ url_for('login') }}" class="btn-nav-accent {% if request.endpoint == 'login' %}active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+                Admin Login
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Messages Section -->
+  <div class="container flash-messages">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert-msg alert-msg-{{ category }}" role="alert">
+            <span>{{ message }}</span>
+            <button type="button" class="close-alert" aria-label="Close notification">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <strong>RouteAlert</strong> &ndash; Salem Bus Delay and Route Diversion Alert System
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+          Designed for Salem, Tamil Nadu passenger awareness (Old Bus Stand, New Bus Stand, Salem Junction & suburbs).
+        </div>
+      </div>
+      <div class="footer-links">
+        <a href="{{ url_for('index') }}">Public Alerts</a>
+        {% if is_admin_logged_in %}
+          <a href="{{ url_for('admin_dashboard') }}">Admin Area</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Staff Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

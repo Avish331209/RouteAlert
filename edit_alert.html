@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Alert #{{ alert.id }} – RouteAlert{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card">
+    <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+      <a href="{{ url_for('admin_dashboard') }}" style="font-size: 0.85rem; color: var(--accent-teal); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.35rem; margin-bottom: 0.5rem;">
+        &larr; Back to Admin Dashboard
+      </a>
+      <h2 class="form-title">Edit Bus Alert #{{ alert.id }}</h2>
+      <p class="form-subtitle">Update alert details, verify the report, or update status (Active, Resolved, Expired).</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('edit_alert', alert_id=alert.id) }}" novalidate>
+      <!-- CSRF Token -->
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <!-- Title (Required) -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="title">Alert Title <span style="color: #dc2626;">*</span></label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          placeholder="e.g., Heavy Waterlogging on Meyyanur Main Road"
+          value="{{ form_data.title or alert.title }}"
+          required
+          maxlength="150"
+        >
+      </div>
+
+      <!-- Route Number & Affected Area -->
+      <div class="form-row-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="route_number">Bus Route Number <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+          <input
+            type="text"
+            id="route_number"
+            name="route_number"
+            class="form-control"
+            placeholder="e.g., 13, 17, 24A, 4"
+            value="{{ form_data.route_number if form_data.route_number is not none else (alert.route_number or '') }}"
+            maxlength="30"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="affected_area">Affected Area <span style="color: #dc2626;">*</span></label>
+          <input
+            type="text"
+            id="affected_area"
+            name="affected_area"
+            class="form-control"
+            placeholder="e.g., Salem Junction / Meyyanur"
+            value="{{ form_data.affected_area or alert.affected_area }}"
+            required
+            maxlength="100"
+          >
+        </div>
+      </div>
+
+      <!-- Bus Stop & Category -->
+      <div class="form-row-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="bus_stop">Specific Bus Stop <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+          <input
+            type="text"
+            id="bus_stop"
+            name="bus_stop"
+            class="form-control"
+            placeholder="e.g., Central Bus Stand Platform 4"
+            value="{{ form_data.bus_stop if form_data.bus_stop is not none else (alert.bus_stop or '') }}"
+            maxlength="100"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category <span style="color: #dc2626;">*</span></label>
+          <select id="category" name="category" class="form-control" required>
+            {% for cat in CATEGORIES %}
+              <option value="{{ cat }}" {% if (form_data.category or alert.category) == cat %}selected{% endif %}>
+                {{ cat }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Reason & Delay -->
+      <div class="form-row-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="reason">Reason for Disruption <span style="color: #dc2626;">*</span></label>
+          <select id="reason" name="reason" class="form-control" required>
+            {% for res in REASONS %}
+              <option value="{{ res }}" {% if (form_data.reason or alert.reason) == res %}selected{% endif %}>
+                {{ res }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="estimated_delay_minutes">Estimated Delay (Minutes) <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+          <input
+            type="number"
+            id="estimated_delay_minutes"
+            name="estimated_delay_minutes"
+            class="form-control"
+            placeholder="e.g., 25"
+            min="0"
+            step="1"
+            value="{{ form_data.estimated_delay_minutes if form_data.estimated_delay_minutes is not none else (alert.estimated_delay_minutes if alert.estimated_delay_minutes is not none else '') }}"
+          >
+          <span class="form-hint">Leave blank if unknown. Do not invent an estimate.</span>
+        </div>
+      </div>
+
+      <!-- Description (Required) -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="description">Disruption Description <span style="color: #dc2626;">*</span></label>
+        <textarea
+          id="description"
+          name="description"
+          class="form-control"
+          required
+          maxlength="1000"
+        >{{ form_data.description or alert.description }}</textarea>
+      </div>
+
+      <!-- Alternative Route / Travel Advice (Optional) -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="alternative_route">Alternative Route / Travel Advice <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+        <textarea
+          id="alternative_route"
+          name="alternative_route"
+          class="form-control"
+          style="min-height: 75px;"
+          maxlength="500"
+        >{{ form_data.alternative_route if form_data.alternative_route is not none else (alert.alternative_route or '') }}</textarea>
+      </div>
+
+      <!-- Verification Status & Status -->
+      <div class="form-row-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="verification_status">Verification Status <span style="color: #dc2626;">*</span></label>
+          <select id="verification_status" name="verification_status" class="form-control" required>
+            {% for v in VERIFICATION_STATUSES %}
+              <option value="{{ v }}" {% if (form_data.verification_status or alert.verification_status) == v %}selected{% endif %}>
+                {{ v }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="status">Alert Status <span style="color: #dc2626;">*</span></label>
+          <select id="status" name="status" class="form-control" required>
+            {% for s in STATUSES %}
+              <option value="{{ s }}" {% if (form_data.status or alert.status) == s %}selected{% endif %}>
+                {{ s }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Source Name & Source URL -->
+      <div class="form-row-2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+          <label for="source_name">Source / Reporter <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+          <input
+            type="text"
+            id="source_name"
+            name="source_name"
+            class="form-control"
+            placeholder="e.g., Salem Traffic Police"
+            value="{{ form_data.source_name if form_data.source_name is not none else (alert.source_name or '') }}"
+            maxlength="100"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="source_url">Reference URL <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+          <input
+            type="url"
+            id="source_url"
+            name="source_url"
+            class="form-control"
+            placeholder="https://example.com/notice"
+            value="{{ form_data.source_url if form_data.source_url is not none else (alert.source_url or '') }}"
+          >
+        </div>
+      </div>
+
+      <!-- Expiration Date & Time -->
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="expires_at">Expiration Date & Time (IST) <span style="color: var(--text-light); font-weight: normal;">(Optional)</span></label>
+        <input
+          type="datetime-local"
+          id="expires_at"
+          name="expires_at"
+          class="form-control"
+          value="{{ (form_data.expires_at if form_data.expires_at is not none else alert.expires_at)|datetime_local }}"
+        >
+      </div>
+
+      <!-- Submit and Cancel Buttons -->
+      <div class="form-actions-bar">
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+          Cancel
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Update Alert
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

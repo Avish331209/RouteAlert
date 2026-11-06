@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}RouteAlert – Salem Bus Delay and Route Diversion Alerts{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-banner">
+  <div class="container hero-content">
+    <div class="hero-pill">
+      <!-- Location Pin Icon -->
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+      </svg>
+      Salem Municipal Corporation & District Routes
+    </div>
+    <h1 class="hero-title">RouteAlert</h1>
+    <p class="hero-subtitle">Salem Bus Delay and Route Diversion Alerts</p>
+    <p class="hero-description">
+      Real-time public notice board for bus delays, road diversions, cancellations, and traffic congestions across Old Bus Stand, New Central Bus Stand, Suramangalam, and surrounding routes.
+    </p>
+  </div>
+</section>
+
+<div class="container">
+  <!-- A. Dashboard Summary Cards (Calculated from Database) -->
+  <section class="metrics-grid" aria-label="Dashboard Statistics">
+    <!-- Active Alerts -->
+    <a href="{{ url_for('index', status='Active') }}" class="metric-card metric-active" title="Filter by Active Alerts">
+      <div class="metric-info">
+        <h3>Active Alerts</h3>
+        <div class="metric-value">{{ counts.active_alerts }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Bus Delays -->
+    <a href="{{ url_for('index', category='Delay', status='Active') }}" class="metric-card metric-delay" title="Filter by Active Bus Delays">
+      <div class="metric-info">
+        <h3>Bus Delays</h3>
+        <div class="metric-value">{{ counts.bus_delays }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Route Diversions -->
+    <a href="{{ url_for('index', category='Route Diversion', status='Active') }}" class="metric-card metric-diversion" title="Filter by Active Route Diversions">
+      <div class="metric-info">
+        <h3>Route Diversions</h3>
+        <div class="metric-value">{{ counts.route_diversions }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Resolved Alerts -->
+    <a href="{{ url_for('index', status='Resolved') }}" class="metric-card metric-resolved" title="Filter by Resolved Alerts">
+      <div class="metric-info">
+        <h3>Resolved Alerts</h3>
+        <div class="metric-value">{{ counts.resolved_alerts }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+    </a>
+  </section>
+
+  <!-- C. Search and Filters Section -->
+  <section class="search-filter-card" aria-label="Search and Filter Alerts">
+    <div class="filter-header">
+      <div class="filter-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        Filter Bus Alerts
+      </div>
+      {% if search_query or route_query or area_query or selected_category or selected_reason or selected_status %}
+        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm" id="clear-filters-btn">
+          ✕ Reset Filters
+        </a>
+      {% endif %}
+    </div>
+
+    <form method="GET" action="{{ url_for('index') }}" class="filter-form">
+      <div class="form-grid-top">
+        <!-- Unified Keyword Search (Title / Description) -->
+        <div class="form-group">
+          <label for="q">Keyword or Description Search</label>
+          <input
+            type="text"
+            id="q"
+            name="q"
+            class="form-control"
+            placeholder="e.g., Fairlands, heavy rain, festival..."
+            value="{{ search_query }}"
+          >
+        </div>
+
+        <!-- Search by Route Number -->
+        <div class="form-group">
+          <label for="route">Bus Route Number</label>
+          <input
+            type="text"
+            id="route"
+            name="route"
+            class="form-control"
+            placeholder="e.g., 13, 17, 24, 4..."
+            value="{{ route_query }}"
+          >
+        </div>
+
+        <!-- Search by Bus Stop or Area -->
+        <div class="form-group">
+          <label for="area">Bus Stop or Area</label>
+          <input
+            type="text"
+            id="area"
+            name="area"
+            class="form-control"
+            placeholder="e.g., Hasthampatti, New Bus Stand..."
+            value="{{ area_query }}"
+          >
+        </div>
+      </div>
+
+      <div class="form-grid-bottom">
+        <!-- Filter by Category -->
+        <div class="form-group">
+          <label for="category">Alert Category</label>
+          <select id="category" name="category" class="form-control">
+            <option value="">All Categories</option>
+            {% for cat in CATEGORIES %}
+              <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>
+                {{ cat }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Filter by Reason -->
+        <div class="form-group">
+          <label for="reason">Disruption Reason</label>
+          <select id="reason" name="reason" class="form-control">
+            <option value="">All Reasons</option>
+            {% for res in REASONS %}
+              <option value="{{ res }}" {% if selected_reason == res %}selected{% endif %}>
+                {{ res }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Filter by Status -->
+        <div class="form-group">
+          <label for="status">Alert Status</label>
+          <select id="status" name="status" class="form-control">
+            <option value="">All Statuses</option>
+            {% for st in STATUSES %}
+              <option value="{{ st }}" {% if selected_status == st %}selected{% endif %}>
+                {{ st }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary" style="height: 42px; width: 100%;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- Alerts Header -->
+  <div class="section-heading-bar">
+    <h2 class="section-heading">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+      Bus Disruption Notices
+    </h2>
+    <span class="results-badge">
+      Showing {{ alerts|length }} notice{% if alerts|length != 1 %}s{% endif %}
+    </span>
+  </div>
+
+  <!-- B. Bus Alert Cards List -->
+  {% if alerts %}
+    <div class="alerts-grid">
+      {% for alert in alerts %}
+        <article class="alert-card" id="alert-{{ alert.id }}">
+          <!-- Card Header: Category & Badges -->
+          <div class="alert-card-header">
+            <div class="alert-category-badge cat-{{ alert.category|lower|replace(' ', '-') }}">
+              {% if alert.category == 'Delay' %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              {% elif alert.category == 'Route Diversion' %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              {% elif alert.category == 'Cancellation' %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              {% else %}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              {% endif %}
+              {{ alert.category }}
+            </div>
+
+            <div class="alert-badges-row">
+              <!-- D. Verification Status Badge -->
+              {% if alert.verification_status == 'Verified' %}
+                <span class="verify-badge badge-verified" title="Checked and verified by administrator">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Verified
+                </span>
+              {% else %}
+                <span class="verify-badge badge-unverified" title="Unverified report awaiting administrator check">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  Unverified
+                </span>
+              {% endif %}
+
+              <!-- D. Alert Status Badge -->
+              <span class="status-badge status-{{ alert.status|lower }}">
+                {{ alert.status }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="alert-card-body">
+            <!-- Title -->
+            <h3 class="alert-title">{{ alert.title }}</h3>
+
+            <!-- Route & Affected Area Strip -->
+            <div class="route-area-strip">
+              {% if alert.route_number %}
+                <span class="route-pill" title="Bus Route">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+                  Route {{ alert.route_number }}
+                </span>
+              {% endif %}
+
+              <span class="area-info" title="Affected Area">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                {{ alert.affected_area }}
+              </span>
+
+              {% if alert.bus_stop %}
+                <span class="bus-stop-info" title="Specific Bus Stop">
+                  &bull; Stop: {{ alert.bus_stop }}
+                </span>
+              {% endif %}
+            </div>
+
+            <!-- Meta Details: Reason & Delay -->
+            <div class="alert-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Reason</span>
+                <span class="meta-value">{{ alert.reason }}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Estimated Delay</span>
+                <span class="meta-value">
+                  <!-- Section 3.B: If unknown, display "Not available". Never invent an estimated delay. -->
+                  {{ alert.estimated_delay_minutes|format_delay }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="alert-description">{{ alert.description }}</p>
+
+            <!-- Alternative Route or Travel Advice (if provided) -->
+            {% if alert.alternative_route %}
+              <div class="travel-advice-box">
+                <div class="travel-advice-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  Travel Advice / Alternative Route
+                </div>
+                <p>{{ alert.alternative_route }}</p>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Card Footer: Timestamps and Source -->
+          <footer class="alert-card-footer">
+            <div>
+              <strong>Created:</strong> {{ alert.created_at|kolkata_datetime }}
+              {% if alert.updated_at and alert.updated_at != alert.created_at %}
+                &bull; <strong>Updated:</strong> {{ alert.updated_at|kolkata_datetime }}
+              {% endif %}
+            </div>
+
+            {% if alert.expires_at %}
+              <div>
+                <strong>Valid until:</strong> {{ alert.expires_at|kolkata_datetime }}
+              </div>
+            {% endif %}
+
+            {% if alert.source_name or alert.source_url %}
+              <div class="source-line">
+                <span>Source:</span>
+                {% if alert.source_url %}
+                  <a href="{{ alert.source_url }}" target="_blank" rel="noopener noreferrer">
+                    {{ alert.source_name or alert.source_url }}
+                  </a>
+                {% else %}
+                  <span>{{ alert.source_name }}</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          </footer>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Friendly message when no alerts are available -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+      </div>
+
+      {% if total_in_db == 0 %}
+        <!-- Requirement: An empty database displays an appropriate message -->
+        <h3 class="empty-title">No Bus Alerts Reported Yet</h3>
+        <p class="empty-desc">
+          There are currently no bus delays, diversions, or cancellations registered in the Salem alert system. All scheduled services are operating smoothly or no new reports have been logged by the administrator.
+        </p>
+        {% if is_admin_logged_in %}
+          <a href="{{ url_for('add_alert') }}" class="btn btn-primary">
+            + Post the First Bus Alert
+          </a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-navy">
+            Administrator Login
+          </a>
+        {% endif %}
+      {% else %}
+        <!-- Friendly message for search with no matches -->
+        <h3 class="empty-title">No Matching Alerts Found</h3>
+        <p class="empty-desc">
+          No bus alerts match your current search terms and filter criteria. Try adjusting your search query, selecting different categories, or resetting filters.
+        </p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+          View All Bus Alerts
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

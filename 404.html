@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_title or '404 - Page Not Found' }} – RouteAlert{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="empty-state" style="margin: 4rem auto; max-width: 550px;">
+    <div class="empty-icon" style="background-color: #fee2e2; color: #dc2626;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+    </div>
+    <h2 class="empty-title">{{ error_title or 'Page Not Found' }}</h2>
+    <p class="empty-desc">
+      {{ error_message or 'The bus alert or requested page could not be located. It might have been resolved, removed, or the address entered is incorrect.' }}
+    </p>
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <a href="{{ url_for('index') }}" class="btn btn-primary">
+        Return to Home Page
+      </a>
+      {% if is_admin_logged_in %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-navy">
+          Admin Dashboard
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

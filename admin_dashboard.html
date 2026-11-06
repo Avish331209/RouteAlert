@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Dashboard – RouteAlert{% endblock %}
+
+{% block content %}
+<section class="hero-banner" style="padding: 1.75rem 0;">
+  <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 class="hero-title" style="font-size: 1.75rem; margin-bottom: 0.25rem;">Administrator Dashboard</h1>
+      <p style="color: #cbd5e1; font-size: 0.95rem; margin: 0;">
+        Manage Salem bus disruption notices, verify crowd reports, and update statuses.
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('add_alert') }}" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add New Alert
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="container" style="margin-top: 2rem;">
+  <!-- Summary Cards -->
+  <div class="metrics-grid" style="margin-top: 0; margin-bottom: 1.75rem;">
+    <div class="metric-card metric-active">
+      <div class="metric-info">
+        <h3>Active Alerts</h3>
+        <div class="metric-value">{{ counts.active_alerts }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      </div>
+    </div>
+
+    <div class="metric-card metric-delay">
+      <div class="metric-info">
+        <h3>Bus Delays</h3>
+        <div class="metric-value">{{ counts.bus_delays }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+      </div>
+    </div>
+
+    <div class="metric-card metric-diversion">
+      <div class="metric-info">
+        <h3>Route Diversions</h3>
+        <div class="metric-value">{{ counts.route_diversions }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </div>
+    </div>
+
+    <div class="metric-card metric-resolved">
+      <div class="metric-info">
+        <h3>Resolved Alerts</h3>
+        <div class="metric-value">{{ counts.resolved_alerts }}</div>
+      </div>
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Alerts Table Section -->
+  <div class="admin-card">
+    <div class="admin-card-header">
+      <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--primary-navy);">
+        All Disruption Alerts ({{ alerts|length }})
+      </h2>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <form method="GET" action="{{ url_for('admin_dashboard') }}" style="display: flex; gap: 0.5rem;">
+          <input
+            type="text"
+            name="q"
+            class="form-control"
+            placeholder="Search alerts..."
+            value="{{ search_query }}"
+            style="width: 180px; padding: 0.4rem 0.6rem; font-size: 0.85rem;"
+          >
+          <select name="status" class="form-control" style="width: 130px; padding: 0.4rem 0.6rem; font-size: 0.85rem;">
+            <option value="">All Statuses</option>
+            {% for st in STATUSES %}
+              <option value="{{ st }}" {% if status_filter == st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+          {% if search_query or status_filter %}
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary btn-sm">Reset</a>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    {% if alerts %}
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title & Affected Area</th>
+              <th>Category</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Verification</th>
+              <th>Delay</th>
+              <th>Created (IST)</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for alert in alerts %}
+              <tr>
+                <td><strong>#{{ alert.id }}</strong></td>
+                <td>
+                  <div style="font-weight: 700; color: var(--primary-navy);">{{ alert.title }}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-light);">
+                    {% if alert.route_number %}<strong>Route {{ alert.route_number }}</strong> &bull; {% endif %}
+                    {{ alert.affected_area }}
+                    {% if alert.bus_stop %}(Stop: {{ alert.bus_stop }}){% endif %}
+                  </div>
+                </td>
+                <td>
+                  <span class="alert-category-badge cat-{{ alert.category|lower|replace(' ', '-') }}">
+                    {{ alert.category }}
+                  </span>
+                </td>
+                <td>{{ alert.reason }}</td>
+                <td>
+                  <span class="status-badge status-{{ alert.status|lower }}">
+                    {{ alert.status }}
+                  </span>
+                </td>
+                <td>
+                  {% if alert.verification_status == 'Verified' %}
+                    <span class="verify-badge badge-verified">Verified</span>
+                  {% else %}
+                    <span class="verify-badge badge-unverified">Unverified</span>
+                  {% endif %}
+                </td>
+                <td>{{ alert.estimated_delay_minutes|format_delay }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-light); white-space: nowrap;">
+                  {{ alert.created_at|kolkata_datetime("%d %b %Y, %I:%M %p") }}
+                </td>
+                <td style="text-align: right;">
+                  <div class="action-buttons" style="justify-content: flex-end;">
+                    <!-- Edit Alert Button -->
+                    <a href="{{ url_for('edit_alert', alert_id=alert.id) }}" class="btn btn-secondary btn-sm" title="Edit this alert">
+                      Edit
+                    </a>
+
+                    <!-- Toggle Verification -->
+                    <form action="{{ url_for('toggle_verify_action', alert_id=alert.id) }}" method="POST" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                      {% if alert.verification_status == 'Verified' %}
+                        <input type="hidden" name="verification_status" value="Unverified">
+                        <button type="submit" class="btn btn-secondary btn-sm" title="Mark as Unverified">
+                          Unverify
+                        </button>
+                      {% else %}
+                        <input type="hidden" name="verification_status" value="Verified">
+                        <button type="submit" class="btn btn-primary btn-sm" title="Mark as Verified">
+                          Verify
+                        </button>
+                      {% endif %}
+                    </form>
+
+                    <!-- Mark as Resolved Quick Action -->
+                    {% if alert.status != 'Resolved' %}
+                      <form action="{{ url_for('resolve_alert_action', alert_id=alert.id) }}" method="POST" style="display:inline;" data-confirm="Mark alert #{{ alert.id }} as Resolved?">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-secondary" style="color: #065f46; border-color: #a7f3d0;" title="Mark as Resolved">
+                          Resolve
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    <!-- Mark as Expired Quick Action -->
+                    {% if alert.status != 'Expired' %}
+                      <form action="{{ url_for('expire_alert_action', alert_id=alert.id) }}" method="POST" style="display:inline;" data-confirm="Mark alert #{{ alert.id }} as Expired?">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn btn-sm btn-secondary" style="color: #9f1239; border-color: #fecdd3;" title="Mark as Expired">
+                          Expire
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted);">
+        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">No alerts found matching your criteria.</p>
+        <p style="font-size: 0.9rem; margin-bottom: 1.25rem;">You can add a new bus disruption notice anytime.</p>
+        <a href="{{ url_for('add_alert') }}" class="btn btn-primary">+ Add New Alert</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

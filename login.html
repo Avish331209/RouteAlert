@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Login – RouteAlert{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card login-card">
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div style="width: 3.5rem; height: 3.5rem; background-color: var(--navy-surface); color: var(--accent-teal); border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <h2 class="form-title">Administrator Portal</h2>
+      <p class="form-subtitle">Enter your administrator credentials to manage Salem bus alerts.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <!-- CSRF Protection Token -->
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          class="form-control"
+          placeholder="Enter administrator username"
+          value="{{ username or '' }}"
+          required
+          autocomplete="username"
+          autofocus
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.75rem;">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="form-control"
+          placeholder="Enter administrator password"
+          required
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+          <polyline points="10 17 15 12 10 7"></polyline>
+          <line x1="15" y1="12" x2="3" y2="12"></line>
+        </svg>
+        Sign In as Administrator
+      </button>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.8rem; color: var(--text-light);">
+        <span>Public access only?</span>
+        <a href="{{ url_for('index') }}" style="color: var(--accent-teal); text-decoration: none; font-weight: 600;">
+          Return to Public Alerts
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
